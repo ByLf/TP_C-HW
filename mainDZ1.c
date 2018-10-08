@@ -1,4 +1,5 @@
 /*
+Run ID: transcend.flash.mnnm
 Задача A-4. Задача о простых сомножителях
 Time limit:	14 s
 Memory limit:	64 M
