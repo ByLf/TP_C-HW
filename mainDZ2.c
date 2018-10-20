@@ -16,7 +16,7 @@ Memory limit:	64 M
 Результирующее множество должно выводиться без пробелов, в отсортированном порядке.
 В случае, если введенное выражение содержит ошибку, необходимо вывести в поток стандартного вывода сообщение "[error]" и завершить выполнение программы.
 */
-#include <stdlib.h>
+#include "stdlib.h"
 #include <stdio.h>
 #include "string.h"
 
@@ -34,7 +34,7 @@ void SetElIntoZero( struct Set *reviewedSet){
   reviewedSet -> priorityOperation = 0;
 }
 
-void DeleteSet( struct Set* deletedSet){
+void DeletedSet( struct Set* deletedSet){
   free(deletedSet->el);
   free(deletedSet);
 }
@@ -142,7 +142,7 @@ struct Set* UnionSet(struct Set *const Set1, struct Set *const Set2){
   }
   *Set1 = *ResultSet;
   free(ResultSet);
-  deletedSet(Set2);
+  DeletedSet(Set2);
   return Set1;
 }
 
@@ -186,7 +186,7 @@ struct Set* IntersectionSet(struct Set *const Set1, struct Set *const Set2){
   }
   *Set1 = *ResultSet;
   free(ResultSet);
-  deletedSet(Set2);
+  DeletedSet(Set2);
   return Set1;
 }
 
@@ -229,7 +229,7 @@ struct Set* DifferenceSet(struct Set *const subtractSet, struct Set *const divid
   ResultSet->countEl = NumResElem;
   *subtractSet = *ResultSet;
   free(ResultSet);
-  deletedSet(dividerSet);
+  DeletedSet(dividerSet);
   return subtractSet;
 }
 
@@ -272,7 +272,7 @@ struct Set* ReadSets(const char* Str){
         case ',':
           if ( CheckBracket == 0){
             for(size_t i = 0; i < NumSet; i++){
-              deletedSet(&Sets[i]);
+              DeletedSet(&Sets[i]);
             }
             printf("[error]\n");
             return NULL;
@@ -290,14 +290,14 @@ struct Set* ReadSets(const char* Str){
               Sets[NumSet].el = (int*)malloc(sizeof(int) * SizeArrElOfSet);//в примере было по 3 числа
               if (Sets[NumSet].el == NULL){
                 for(size_t i = 0; i < NumSet; i++){
-                  deletedSet(&Sets[i]);
+                  DeletedSet(&Sets[i]);
                 }
                 printf("[error]\n");
                 return NULL;
               }
             }else{
               for(size_t i = 0; i < NumSet; i++){
-                deletedSet(&Sets[i]);
+                DeletedSet(&Sets[i]);
               }
               printf("[error]\n");
               return NULL;
@@ -315,7 +315,9 @@ struct Set* ReadSets(const char* Str){
         case '9':
         case '0':
           if (CheckBracket == 1){
-            Sets[NumSet].el[NumElOfSet] =  strol(Str, Str, 10);
+            char* BufPtrStr = NULL;
+            Sets[NumSet].el[NumElOfSet] =  strtol(Str, &BufPtrStr, 10);
+            Str = BufPtrStr;
             NumElOfSet++;
             if (SizeArrElOfSet == NumElOfSet){
               SizeArrElOfSet *=2;
@@ -323,7 +325,7 @@ struct Set* ReadSets(const char* Str){
             }
           }else{
             for(size_t i = 0; i < NumSet; i++){
-              deletedSet(&Sets[i]);
+              DeletedSet(&Sets[i]);
             }
             printf("[error]\n");
             return NULL;
@@ -337,7 +339,7 @@ struct Set* ReadSets(const char* Str){
                 SortSet(Sets);
               }else{
                 for(size_t i = 0; i < NumSet; i++){
-                  deletedSet(&Sets[i]);
+                  DeletedSet(&Sets[i]);
                 }
                 printf("[error]\n");
                 return NULL;
@@ -349,7 +351,7 @@ struct Set* ReadSets(const char* Str){
             Sets[NumSet].operationAfterSet = 'U';
           }else{
             for(size_t i = 0; i < NumSet; i++){
-              deletedSet(&Sets[i]);
+              DeletedSet(&Sets[i]);
             }
             printf("[error]\n");
             return NULL;
@@ -361,7 +363,7 @@ struct Set* ReadSets(const char* Str){
             Sets[NumSet].operationAfterSet = '^';
           }else{
             for(size_t i = 0; i < NumSet; i++){
-              deletedSet(&Sets[i]);
+              DeletedSet(&Sets[i]);
             }
             printf("[error]\n");
             return NULL;
@@ -373,7 +375,7 @@ struct Set* ReadSets(const char* Str){
               Sets[NumSet].operationAfterSet = '\\';
             }else{
               for(size_t i = 0; i < NumSet; i++){
-                deletedSet(&Sets[i]);
+                DeletedSet(&Sets[i]);
               }
               printf("[error]\n");
               return NULL;
@@ -385,7 +387,7 @@ struct Set* ReadSets(const char* Str){
             priorityOperation++;
           }else{
             for(size_t i = 0; i < NumSet; i++){
-              deletedSet(&Sets[i]);
+              DeletedSet(&Sets[i]);
             }
             printf("[error]\n");
             return NULL;
@@ -397,7 +399,7 @@ struct Set* ReadSets(const char* Str){
             priorityOperation--;
           }else{
             for(size_t i = 0; i < NumSet; i++){
-              deletedSet(&Sets[i]);
+              DeletedSet(&Sets[i]);
             }
             printf("[error]\n");
             return NULL;
@@ -407,7 +409,7 @@ struct Set* ReadSets(const char* Str){
         case 0:
           if (priorityOperation != 0){
             for(size_t i = 0; i < NumSet; i++){
-              deletedSet(&Sets[i]);
+              DeletedSet(&Sets[i]);
             }
             printf("[error]\n");
             return NULL;
@@ -417,7 +419,7 @@ struct Set* ReadSets(const char* Str){
           break;
         default:
           for(size_t i = 0; i < NumSet; i++){
-            deletedSet(&Sets[i]);
+            DeletedSet(&Sets[i]);
           }
           printf("[error]\n");
           return NULL;
@@ -477,3 +479,4 @@ int main(int argc, char const *argv[]) {
   }
   return 0;
 }
+
