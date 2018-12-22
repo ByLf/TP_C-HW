@@ -1,0 +1,271 @@
+/*
+Солдаты. В одной военной части решили построить в одну шеренгу по росту.
+Т.к. часть была далеко не образцовая, то солдаты часто приходили не вовремя, 
+а то их и вовсе приходилось выгонять из шеренги за плохо начищенные сапоги. 
+Однако солдаты в процессе прихода и ухода должны были всегда быть выстроены по росту – сначала самые высокие, 
+а в конце – самые низкие. За расстановку солдат отвечал прапорщик, который заметил интересную особенность – 
+все солдаты в части разного роста. Ваша задача состоит в том, чтобы помочь прапорщику правильно расставлять солдат, 
+а именно для каждого приходящего солдата указывать, перед каким солдатом в строе он должен становится. 
+Требуемая скорость выполнения команды - O(log n).
+Формат входных данных.
+Первая строка содержит число N – количество команд (1 ≤ N ≤ 30 000). В каждой следующей строке содержится описание команды: 
+число 1 и X если солдат приходит в строй (X – рост солдата, натуральное число до 100 000 включительно) и 
+число 2 и Y если солдата, стоящим в строе на месте Y надо удалить из строя. Солдаты в строе нумеруются с нуля.
+сделать хранение кол-ва эл-тов в поддереве.*/
+
+#include "stdafx.h"
+
+#include <iostream>
+#include <queue>
+#include <stack>
+using namespace std;
+
+class CAVLTree {
+public:
+	CAVLTree() : root(nullptr) {}
+	~CAVLTree() { clear(root); }
+
+	bool Has(const int& key) const;
+	int Add(const int& key);
+	bool Remove(const int& key);
+
+private:
+	struct CAVLNode {
+		int Key;
+		CAVLNode* Left;
+		CAVLNode* Right;
+		int Depth;
+		int NumberInSubtree;
+		explicit CAVLNode(const int& key) : Key(key), Left(nullptr), Right(nullptr), Depth(1), NumberInSubtree(0){}
+	};
+	CAVLNode* root;
+
+	void clear(CAVLNode* node);
+	void balance(CAVLNode*& node);
+	static int depth(CAVLNode* node);
+	static void rotateLeft(CAVLNode*& node);
+	static void rotateRight(CAVLNode*& node);
+	static void fixDepth(CAVLNode* node);
+	static void fixNumberInSubtree(CAVLNode* node);
+};
+
+void CAVLTree::clear(CAVLNode* node)
+{
+	if (node == nullptr) {
+		return;
+	}
+	CAVLNode* ptrNode = nullptr;
+	stack<CAVLNode*> st;
+	st.push(node);
+	while (!st.empty()) {
+		ptrNode = st.top();
+		st.pop();
+		if (ptrNode->Left != nullptr) st.push(ptrNode->Left);
+		if (ptrNode->Right != nullptr) st.push(ptrNode->Right);
+		delete ptrNode;
+	}
+	
+}
+
+bool CAVLTree::Has(const int& key) const
+{
+	CAVLNode* node = root;
+	while (node != 0) {
+		if (node->Key == key) {
+			return true;
+		}
+		node = node->Key < key ? node->Right : node->Left;
+	}
+	return false;
+}
+
+int CAVLTree::Add(const int& key)
+{
+	if (root == nullptr) {
+		root = new CAVLNode(key); 
+		return 0;
+	}
+	int NumberOfTree = 0;
+	CAVLNode* node = root;
+	stack<CAVLNode*> st;
+	while (node != nullptr && node->Key != key) {
+		st.push(node);
+		if (node->Key > key) {
+			if(node->Left !=nullptr){ NumberOfTree += node->Left->NumberInSubtree + 1; }
+			node = node->Right;
+		}
+		else {
+			node = node->Left;
+		}
+		
+	}
+	if (node != nullptr) {
+		return -1;
+	}
+	
+	(st.top()->Key > key ? st.top()->Left : st.top()->Right) = new CAVLNode(key);
+	(st.top()->NumberInSubtree)++;
+	st.pop();
+	while (!st.empty())
+	{
+		balance(st.top());
+		st.pop();
+	}
+	return NumberOfTree;
+}
+
+bool CAVLTree::Remove(const int& key) 
+{
+	CAVLNode* node = root;
+	stack<CAVLNode*> st;
+	while (node != nullptr && node->Key != key) {
+		st.push(node);
+		if (node->Key > key) {
+			node = node->Right;
+		}
+		else {
+			node = node->Right;
+		}
+	}
+	if (node == nullptr) {
+		return false;
+	}
+	if (st.empty()) {
+		delete node;
+		root = nullptr;
+		return true;
+	}
+	CAVLNode* _BufPtrNode = nullptr;
+	if (node->Left == nullptr || node->Right == nullptr) {
+		_BufPtrNode = node->Left == nullptr ? node->Right : node->Left;
+		st.top()->Left == node ? st.top()->Left : st.top()->Right = _BufPtrNode;
+		delete node;
+	}
+	
+	if (node->Left->Depth > node->Right->Depth) {
+		st.push(node->Left);
+		while (st.top()->Right != nullptr)
+		{
+			st.push(st.top()->Right);
+		}
+		node->Key = st.top()->Key;
+		_BufPtrNode = st.top()->Left;
+		delete st.top();
+		st.pop();
+		st.top()->Right = _BufPtrNode;
+	}
+	else {
+		st.push(node->Right);
+		while (st.top()->Left != nullptr)
+		{
+			st.push(st.top()->Left);
+		}
+		node->Key = st.top()->Key;
+		_BufPtrNode = st.top()->Right;
+		delete st.top();
+		st.pop();
+		st.top()->Left = _BufPtrNode;
+	}
+	(st.top()->NumberInSubtree)--;
+	while (!st.empty())
+	{
+		balance(st.top());
+		st.pop();
+	}
+	return true;
+}
+
+void CAVLTree::balance(CAVLNode*& node)
+{
+	const int bFactor = depth(node->Left) - depth(node->Right);
+	if (bFactor == -2) {
+		const int rightBFactor = depth(node->Right->Left) - depth(node->Right->Right);
+		if (rightBFactor == 1) {
+			rotateRight(node->Right);
+		}
+		rotateLeft(node);
+	}
+	else if (bFactor == 2) {
+		const int leftBFactor = depth(node->Left->Left) - depth(node->Left->Right);
+		if (leftBFactor == -1) {
+			rotateLeft(node->Left);
+		}
+		rotateRight(node);
+	}
+	else {
+		fixDepth(node);
+	}
+
+	fixNumberInSubtree(node);
+}
+
+int CAVLTree::depth(CAVLNode* node)
+{
+	return node == nullptr ? 0 : node->Depth;
+}
+
+void CAVLTree::rotateLeft(CAVLNode*& node)
+{
+	
+	CAVLNode* right = node->Right;
+	node->Right = right->Left;
+	right->Left = node;
+	node = right;
+
+	fixDepth(node->Left);
+	fixDepth(node);
+	fixNumberInSubtree(node->Left);
+	fixNumberInSubtree(node);
+}
+
+void CAVLTree::rotateRight(CAVLNode*& node)
+{
+	CAVLNode* left = node->Left;
+	node->Left = left->Right;
+	left->Right = node;
+	node = left;
+
+	fixDepth(node->Right);
+	fixDepth(node);
+	fixNumberInSubtree(node->Right);
+	fixNumberInSubtree(node);
+}
+
+void CAVLTree::fixDepth(CAVLNode* node)
+{
+	node->Depth = max(depth(node->Left), depth(node->Right)) + 1;
+}
+
+void CAVLTree::fixNumberInSubtree(CAVLNode* node)
+{
+	int _numSubtree = 0;
+	if (node->Left != nullptr) { _numSubtree += node->Left->NumberInSubtree + 1; }
+	if (node->Right != nullptr) { _numSubtree += node->Right->NumberInSubtree + 1; }
+	if (node->NumberInSubtree != _numSubtree) { node->NumberInSubtree = _numSubtree; }
+}
+
+
+int main()
+{
+	CAVLTree tree;
+	int NumCommand = 0;
+	int valueCommand = 0;
+	int value = 0;
+	cin >> NumCommand;
+	if (cin.fail()) {
+		return 0;
+	}
+	for (int i = 0; i < NumCommand; i++) {
+		cin >> valueCommand >> value;
+		switch (valueCommand) {
+		case 1:
+			cout << tree.Add(value) << endl;
+			break;
+		case 2:
+			cout << (tree.Remove(value) ? "ok" : "error");
+			cout << endl;
+			break;
+		}
+	}
+	return 0;
+}
