@@ -1,0 +1,139 @@
+/*Дано число N < 10^6 и последовательность целых чисел из [-2^31..2^31] длиной N.
+Требуется построить бинарное дерево, заданное наивным порядком вставки.
+Т.е., при добавлении очередного числа K в дерево с корнем root, если root→Key ≤ K,
+то узел K добавляется в правое поддерево root; иначе в левое поддерево root.
+Рекурсия запрещена.
+2_1. Выведите элементы в порядке in-order (слева направо).
+написать лямбду-функцию
+*/
+
+#include "stdafx.h"
+
+#include<iostream>
+#include <stack>
+
+using namespace std;
+
+template<class T>
+class BST {
+public:
+	BST(unsigned int _N);
+	bool addNode(const T& _value);
+	void printTree();
+	~BST();
+private:
+	unsigned int N;
+	struct Node {
+		struct Node *leftChld,
+			*rightChld;
+		T value;
+		Node(const T& _value) :
+			leftChld(nullptr),
+			rightChld(nullptr)
+		{
+			value = _value;
+		}
+	};
+	Node* primaryNode;
+	BST<T>& operator =(const BST<T>& table) = delete;
+	BST<T>& operator =(BST<T>&& table) = delete;
+	bool inOrder(void(*func)(Node*));
+	void clearTree();
+};
+
+template<class T>
+BST<T>::BST(unsigned int _N) : primaryNode(nullptr) {
+	N = _N;
+};
+
+template<class T>
+bool BST<T>::addNode(const T& _value) {
+	if (primaryNode == nullptr) {
+		primaryNode = new Node(_value);
+		return true;
+	}
+	Node *nextNode = primaryNode,
+		*currentNode = nullptr;
+	while (nextNode != nullptr)
+	{
+		currentNode = nextNode;
+		nextNode = currentNode->value > _value ? currentNode->leftChld : currentNode->rightChld;
+	}
+	if (currentNode->value > _value) {
+		currentNode->leftChld = new Node(_value);
+	}
+	else
+	{
+		currentNode->rightChld = new Node(_value);
+	};
+	return true;
+};
+
+template<class T>
+void BST<T>::printTree()
+{
+	inOrder([](Node* _currentnode) {
+		cout << (_currentnode->value);
+	});
+}
+
+template<class T>
+bool BST<T>::inOrder( void (*func)(Node*))
+{
+	stack<struct Node*> st;
+	struct Node* currentNode = primaryNode;
+	unsigned int count = 0;
+	while (count < N)
+	{
+		if (currentNode->leftChld != nullptr) 
+		{
+			st.push(currentNode);
+			currentNode = currentNode->leftChld;
+		}
+		else {
+			func(currentNode);
+			count++;
+			
+			if (currentNode->rightChld != nullptr) {
+				currentNode = currentNode->rightChld;
+			}
+			else {
+				currentNode = st.top();
+				st.pop();
+			}
+		}
+	}
+	return true;
+};
+
+template<class T>
+void BST<T>::clearTree() {
+	inOrder([](Node* node) {
+		delete node;
+	});
+}
+
+template<class T>
+BST<T>::~BST() 
+{
+	clearTree();
+};
+
+
+int main()
+{
+	unsigned int Num;
+	int oneKey;
+
+	cin >> Num;
+	BST<int> tree(Num);
+
+	for (unsigned int i = 0; i < Num; i++)
+	{
+		cin >> oneKey;
+		tree.addNode(oneKey);
+	}
+	tree.printTree();
+    return 0;
+}
+
